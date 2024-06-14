@@ -56,10 +56,10 @@ jobs:
           file: ./Dockerfile
           target: usermanagement-runtime
           push: true
-          tags: docker.io/mikegere/eshop/usermanagement:latest
+          tags: docker.io/mikegere/eshop:latest
 
       - name: Verify Docker images on Docker Hub
         run: |
           docker pull docker.io/mikegere/catalog:latest
-          docker pull docker.io/mikegere/eshop/usermanagement:latest
+          docker pull docker.io/mikegere/eshop:latest
           docker images
