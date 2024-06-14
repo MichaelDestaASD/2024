@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -56,10 +56,10 @@ jobs:
           file: ./Dockerfile
           target: usermanagement-runtime
           push: true
-          tags: docker.io/mikegere/eshop:latest
+          tags: docker.io/mikegere/usermanagement:latest
 
       - name: Verify Docker images on Docker Hub
         run: |
           docker pull docker.io/mikegere/catalog:latest
-          docker pull docker.io/mikegere/eshop:latest
+          docker pull docker.io/mikegere/usermanagement:latest
           docker images
