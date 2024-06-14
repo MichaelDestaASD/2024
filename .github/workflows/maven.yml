@@ -48,3 +48,7 @@ jobs:
           tags: docker.io/mikegere/eshop:latest
           secrets: |
             GITHUB_TOKEN=${{ secrets.TOKEN_GITHUB }}
+      - name: Verify Docker image on Docker Hub
+        run: |
+          docker pull docker.io/mikegere/eshop:latest
+          docker images      
