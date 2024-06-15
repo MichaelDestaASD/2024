@@ -38,7 +38,7 @@ WORKDIR /app/catalog
 # Copy the Catalog JAR
 COPY --from=builder /build/Catalog/target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "Catalog.jar"]
 
 # Stage 3: Create the UserManagement runtime image
 FROM eclipse-temurin:17-jre as usermanagement-runtime
@@ -49,4 +49,4 @@ WORKDIR /app/usermanagement
 # Copy the UserManagement JAR
 COPY --from=builder /build/UserManagement/target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "UserManagement.jar"]
