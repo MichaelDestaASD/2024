@@ -35,49 +35,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Log in to Docker Hub using GitHub Token
+        env:
+          DOCKER_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        run: echo "${DOCKER_TOKEN}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push Catalog Docker image
+        uses: docker/build-push-action@v5
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2  # Specify your AWS region
+          context: .
+          file: ./Dockerfile
+          target: catalog-runtime
+          push: true
+          tags: docker.io/mikegere/catalog:latest
 
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build and Push UserManagement Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: usermanagement-runtime
+          push: true
+          tags: docker.io/mikegere/usermanagement:latest
 
-      - name: Build and Push Catalog Docker image to ECR
+      - name: Verify Docker images on Docker Hub
         run: |
-          ECR_REGISTRY=<your-account-id>.dkr.ecr.<your-region>.amazonaws.com
-          ECR_REPOSITORY=catalog
-          docker build --target catalog-runtime -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      - name: Build and Push UserManagement Docker image to ECR
-        run: |
-          ECR_REGISTRY=<your-account-id>.dkr.ecr.<your-region>.amazonaws.com
-          ECR_REPOSITORY=usermanagement
-          docker build --target usermanagement-runtime -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      - name: Verify Docker images on ECR
-        run: |
-          ECR_REGISTRY=<your-account-id>.dkr.ecr.<your-region>.amazonaws.com
-          aws ecr describe-images --repository-name catalog --image-ids imageTag=latest
-          aws ecr describe-images --repository-name usermanagement --image-ids imageTag=latest
-
-      - name: Update ECS service with the new Catalog image
-        run: |
-          ECS_CLUSTER=<your-cluster-name>
-          ECS_SERVICE=<your-catalog-service-name>
-          CONTAINER_NAME=catalog
-          NEW_IMAGE_URI=$ECR_REGISTRY/catalog:latest
-          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment --query "service.deployments[0].taskDefinition" | xargs -I {} aws ecs describe-task-definition --task-definition {} --query "taskDefinition.containerDefinitions[?name=='$CONTAINER_NAME'].image" | grep -q $NEW_IMAGE_URI
-
-      - name: Update ECS service with the new UserManagement image
-        run: |
-          ECS_CLUSTER=<your-cluster-name>
-          ECS_SERVICE=<your-usermanagement-service-name>
-          CONTAINER_NAME=usermanagement
-          NEW_IMAGE_URI=$ECR_REGISTRY/usermanagement:latest
-          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment --query "service.deployments[0].taskDefinition" | xargs -I {} aws ecs describe-task-definition --task-definition {} --query "taskDefinition.containerDefinitions[?name=='$CONTAINER_NAME'].image" | grep -q $NEW_IMAGE_URI
+          docker pull docker.io/mikegere/catalog:latest
+          docker pull docker.io/mikegere/usermanagement:latest
+          docker images
